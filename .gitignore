@@ -53,3 +53,5 @@ build/
 
 repo.properties
 github.properties
+
+gathered_jars/
