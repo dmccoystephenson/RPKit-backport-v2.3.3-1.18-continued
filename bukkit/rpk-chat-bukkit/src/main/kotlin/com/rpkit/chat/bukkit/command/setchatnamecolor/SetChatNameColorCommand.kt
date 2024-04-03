@@ -24,6 +24,8 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.runAsync
 
 /**
  * SetChatNameColor command.
@@ -57,13 +59,13 @@ class SetChatNameColorCommand(private val plugin: RPKChatBukkit) : CommandExecut
             sender.sendMessage(plugin.messages["setchatnamecolor-usage"])
             return true
         }
-        if (chatNameColor.length > 16) {
+        if (isInputTooLong(chatNameColor)) {
             sender.sendMessage(plugin.messages["setchatnamecolor-too-long"])
             return true
         }
 
-        // should match #ffffff (not case sensitive)
-        if (!chatNameColor.matches(Regex("#[0-9a-fA-F]{6}"))) {
+
+        if (!isHexColorCodeValid(chatNameColor)) {
             sender.sendMessage("Invalid color code. Please use a hex color code, e.g. #ffffff")
             return true
         }
@@ -73,17 +75,50 @@ class SetChatNameColorCommand(private val plugin: RPKChatBukkit) : CommandExecut
             sender.sendMessage(plugin.messages["no-minecraft-profile"])
             return true
         }
+        
+        setChatNameColorAsync(minecraftProfileId, chatNameColor).thenRun {
+            sender.sendMessage("Chat color name set to $chatNameColor")
+        }.exceptionally { exception ->
+            plugin.logger.severe("Failed to set chat name color for ${minecraftProfile.name}")
+            plugin.logger.severe(exception.message)
+            sender.sendMessage("Failed to set chat name color.")
+            return@exceptionally null
+        }
+        true
+    }
 
-        // set chat name color for player in `rpkit_chat_name_color` table
-        val recordExists = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join() != null
-        return if (recordExists) {
-            plugin.database.getTable(RPKChatNameColorTable::class.java).update(minecraftProfileId, chatNameColor)
-            sender.sendMessage("Your chat name color has been updated!")
-            true
-        } else {
-            plugin.database.getTable(RPKChatNameColorTable::class.java).insert(minecraftProfileId, chatNameColor)
-            sender.sendMessage("Your chat name color has been set!")
-            true
+    /**
+     * Checks if the input is too long. The maximum length for a chat name color is 16 characters.
+     * @param name the input to check
+     * @return true if the input is too long, false otherwise
+     */
+    private fun isInputTooLong(name: String): Boolean {
+        return name.length > 16
+    }
+
+    /**
+     * Checks if the input is a valid hex color code. A valid hex color code is a string that starts with a '#' followed by 6 characters that are either digits or letters from a to f.
+     * @param colorCode the color code to check
+     * @return true if the color code is valid, false otherwise
+    */
+    private fun isHexColorCodeValid(colorCode: String): Boolean {
+        return colorCode.matches(Regex("#[0-9a-fA-F]{6}"))
+    }
+
+    /**
+     * Sets the chat name color for a player asynchronously.
+     * @param minecraftProfileId the ID of the player's Minecraft profile
+     * @param chatNameColor the chat name color to set
+     * @return a string indicating the result of the operation
+     */
+    private fun setChatNameColorAsync(minecraftProfileId: Int, chatNameColor: String): : CompletableFuture<Void> {
+        return CompletableFuture.runAsync {
+            val recordExists = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join() != null
+            if (recordExists) {
+                plugin.database.getTable(RPKChatNameColorTable::class.java).update(minecraftProfileId, chatNameColor)
+            } else {
+                plugin.database.getTable(RPKChatNameColorTable::class.java).insert(minecraftProfileId, chatNameColor)
+            }
         }
     }
 }
