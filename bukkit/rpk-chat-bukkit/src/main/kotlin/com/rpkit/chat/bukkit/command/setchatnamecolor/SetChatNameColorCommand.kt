@@ -19,6 +19,7 @@ package com.rpkit.chat.bukkit.command.setchatnamecolor
 import com.rpkit.chat.bukkit.RPKChatBukkit
 import com.rpkit.chat.bukkit.database.table.RPKChatNameColorTable
 import com.rpkit.core.service.Services
+import com.rpkit.players.bukkit.profile.minecraft.RPKMinecraftProfileId
 import com.rpkit.players.bukkit.profile.minecraft.RPKMinecraftProfileService
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -53,17 +54,18 @@ class SetChatNameColorCommand(private val plugin: RPKChatBukkit) : CommandExecut
             return true
         }
 
-        // retrieve desired chat name color
-        val chatNameColor = args[0]
-        if (chatNameColor.isBlank()) {
+        // if no arguments
+        if (args.isEmpty()) {
             sender.sendMessage(plugin.messages["setchatnamecolor-usage"])
             return true
         }
+
+        // retrieve desired chat name color
+        val chatNameColor = args[0]
         if (isInputTooLong(chatNameColor)) {
             sender.sendMessage(plugin.messages["setchatnamecolor-too-long"])
             return true
         }
-
 
         if (!isHexColorCodeValid(chatNameColor)) {
             sender.sendMessage("Invalid color code. Please use a hex color code, e.g. #ffffff")
@@ -84,7 +86,7 @@ class SetChatNameColorCommand(private val plugin: RPKChatBukkit) : CommandExecut
             sender.sendMessage("Failed to set chat name color.")
             return@exceptionally null
         }
-        true
+        return true
     }
 
     /**
@@ -111,7 +113,7 @@ class SetChatNameColorCommand(private val plugin: RPKChatBukkit) : CommandExecut
      * @param chatNameColor the chat name color to set
      * @return a string indicating the result of the operation
      */
-    private fun setChatNameColorAsync(minecraftProfileId: Int, chatNameColor: String): : CompletableFuture<Void> {
+    private fun setChatNameColorAsync(minecraftProfileId: RPKMinecraftProfileId, chatNameColor: String) : CompletableFuture<Void> {
         return CompletableFuture.runAsync {
             val recordExists = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join() != null
             if (recordExists) {
