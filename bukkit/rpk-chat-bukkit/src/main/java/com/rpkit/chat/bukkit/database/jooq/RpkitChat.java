@@ -9,6 +9,7 @@ import com.rpkit.chat.bukkit.database.jooq.tables.RpkitChatChannelSpeaker;
 import com.rpkit.chat.bukkit.database.jooq.tables.RpkitChatGroup;
 import com.rpkit.chat.bukkit.database.jooq.tables.RpkitChatGroupInvite;
 import com.rpkit.chat.bukkit.database.jooq.tables.RpkitChatGroupMember;
+import com.rpkit.chat.bukkit.database.jooq.tables.RpkitChatNameColor;
 import com.rpkit.chat.bukkit.database.jooq.tables.RpkitLastUsedChatGroup;
 import com.rpkit.chat.bukkit.database.jooq.tables.RpkitSnooper;
 
@@ -69,6 +70,11 @@ public class RpkitChat extends SchemaImpl {
     public final RpkitSnooper RPKIT_SNOOPER = RpkitSnooper.RPKIT_SNOOPER;
 
     /**
+     * The table <code>rpkit_chat.rpkit_chat_name_color</code>.
+     */
+    public final RpkitChatNameColor RPKIT_CHAT_NAME_COLOR = RpkitChatNameColor.RPKIT_CHAT_NAME_COLOR;
+
+    /**
      * No further instances allowed
      */
     private RpkitChat() {
@@ -90,7 +96,8 @@ public class RpkitChat extends SchemaImpl {
             RpkitChatGroupInvite.RPKIT_CHAT_GROUP_INVITE,
             RpkitChatGroupMember.RPKIT_CHAT_GROUP_MEMBER,
             RpkitLastUsedChatGroup.RPKIT_LAST_USED_CHAT_GROUP,
-            RpkitSnooper.RPKIT_SNOOPER
+            RpkitSnooper.RPKIT_SNOOPER,
+            RpkitChatNameColor.RPKIT_CHAT_NAME_COLOR
         );
     }
 }

@@ -21,12 +21,14 @@ import com.rpkit.chat.bukkit.chatchannel.context.DirectedPostFormatMessageContex
 import com.rpkit.chat.bukkit.chatchannel.context.DirectedPreFormatMessageContextImpl
 import com.rpkit.chat.bukkit.chatchannel.context.UndirectedMessageContextImpl
 import com.rpkit.chat.bukkit.chatchannel.format.FormatPart
+import com.rpkit.chat.bukkit.chatchannel.format.part.SenderCharacterNamePart
 import com.rpkit.chat.bukkit.chatchannel.pipeline.DirectedPostFormatPipelineComponent
 import com.rpkit.chat.bukkit.chatchannel.pipeline.DirectedPreFormatPipelineComponent
 import com.rpkit.chat.bukkit.chatchannel.pipeline.UndirectedPipelineComponent
 import com.rpkit.chat.bukkit.context.DirectedPostFormatMessageContext
 import com.rpkit.chat.bukkit.context.DirectedPreFormatMessageContext
 import com.rpkit.chat.bukkit.context.UndirectedMessageContext
+import com.rpkit.chat.bukkit.database.table.RPKChatNameColorTable
 import com.rpkit.chat.bukkit.event.chatchannel.RPKBukkitChatChannelMessageEvent
 import com.rpkit.chat.bukkit.mute.RPKChatChannelMuteService
 import com.rpkit.chat.bukkit.speaker.RPKChatChannelSpeakerService
@@ -44,7 +46,7 @@ import java.util.logging.Level
 class RPKChatChannelImpl(
         private val plugin: RPKChatBukkit,
         override val name: RPKChatChannelName,
-        override val color: Color,
+        override var color: Color,
         override val radius: Double,
         override val directedPreFormatPipeline: List<DirectedPreFormatPipelineComponent>,
         override val format: List<FormatPart>,
@@ -169,6 +171,25 @@ class RPKChatChannelImpl(
                         format.flatMap { part -> part.toChatComponents(preFormatContext).join().toList() }.toTypedArray(),
                         preFormatContext.isCancelled
                     )
+                    if (senderMinecraftProfile != null) {
+                        val minecraftProfileId = senderMinecraftProfile.id
+                        if (minecraftProfileId != null) {
+                            val recordExists = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join() != null
+                            if (recordExists) {
+                                for (part in format) {
+                                    if (part is SenderCharacterNamePart) {
+                                        val chatNameColorRecord = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join()
+                                        if (chatNameColorRecord != null) {
+                                            part.color = chatNameColorRecord.chatNameColor
+                                            break
+                                        }
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     directedPostFormatPipeline.forEach { component ->
                         postFormatContext = component.process(postFormatContext).join()
                     }

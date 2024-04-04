@@ -18,13 +18,16 @@ package com.rpkit.chat.bukkit.irc.listener
 
 import com.rpkit.chat.bukkit.RPKChatBukkit
 import com.rpkit.chat.bukkit.chatchannel.RPKChatChannelService
+import com.rpkit.chat.bukkit.chatchannel.format.part.SenderCharacterNamePart
 import com.rpkit.chat.bukkit.chatchannel.undirected.IRCComponent
+import com.rpkit.chat.bukkit.database.table.RPKChatNameColorTable
 import com.rpkit.chat.bukkit.irc.IRCChannel
 import com.rpkit.core.service.Services
 import com.rpkit.players.bukkit.profile.RPKProfileName
 import com.rpkit.players.bukkit.profile.RPKProfileService
 import com.rpkit.players.bukkit.profile.irc.RPKIRCNick
 import com.rpkit.players.bukkit.profile.irc.RPKIRCProfileService
+import com.rpkit.players.bukkit.profile.minecraft.RPKMinecraftProfileId
 import org.pircbotx.hooks.ListenerAdapter
 import org.pircbotx.hooks.events.MessageEvent
 import java.util.concurrent.CompletableFuture
@@ -54,7 +57,19 @@ class IRCMessageListener(private val plugin: RPKChatBukkit) : ListenerAdapter() 
             val senderProfile = senderIRCProfile.profile
             val chatChannelService = Services[RPKChatChannelService::class.java] ?: return@runAsync
             val chatChannel = chatChannelService.getChatChannelFromIRCChannel(IRCChannel(event.channel.name))
-            chatChannel?.sendMessage(
+            // for each part in format
+            // if part is a sender character name part
+            // set color to red
+            val chatChannelFormatIterator = chatChannel?.format?.iterator() ?: return@runAsync
+            while (chatChannelFormatIterator.hasNext()) {
+                val formatPart = chatChannelFormatIterator.next()
+                if (formatPart is SenderCharacterNamePart) {
+                    formatPart.color = "#ffffff"
+                    break
+                }
+            }
+
+            chatChannel.sendMessage(
                 senderProfile,
                 null,
                 event.message,
