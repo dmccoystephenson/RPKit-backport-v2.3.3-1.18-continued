@@ -21,3 +21,11 @@ cd .devcontainer
 
 ## Testing
 Testing can be done using the [rpk-mc-server](https://github.com/dmccoystephenson/rpk-mc-server) project.
+
+## Troubleshooting
+### Cannot lock checksums cache (/workspaces/RPKit/.gradle/checksums) as it has already been locked by this process.
+This error can occur when trying to build the project. To resolve this issue, run the following:
+```
+./gradlew --stop
+```
+This will stop the gradle daemon and allow you to build the project.
