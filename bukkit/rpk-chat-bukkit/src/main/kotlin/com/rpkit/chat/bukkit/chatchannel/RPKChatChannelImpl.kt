@@ -171,26 +171,6 @@ class RPKChatChannelImpl(
                         format.flatMap { part -> part.toChatComponents(preFormatContext).join().toList() }.toTypedArray(),
                         preFormatContext.isCancelled
                     )
-                    
-                    val excludedChatChannels = plugin.config.getList("rpk_channels_excluded_for_chat_name_color_functionality")
-                    if (excludedChatChannels != null && !excludedChatChannels.contains(name.value) && senderMinecraftProfile != null) {
-                        val minecraftProfileId = senderMinecraftProfile.id
-                        if (minecraftProfileId != null) {
-                            val recordExists = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join() != null
-                            if (recordExists) {
-                                for (part in format) {
-                                    if (part is SenderCharacterNamePart) {
-                                        val chatNameColorRecord = plugin.database.getTable(RPKChatNameColorTable::class.java).get(minecraftProfileId).join()
-                                        if (chatNameColorRecord != null) {
-                                            part.color = chatNameColorRecord.chatNameColor
-                                            break
-                                        }
-                                        break
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                     directedPostFormatPipeline.forEach { component ->
                         postFormatContext = component.process(postFormatContext).join()
